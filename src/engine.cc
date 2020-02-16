@@ -151,9 +151,6 @@ void EngineController::NewGame() {
 
 void EngineController::SetPosition(const std::string& fen,
                                    const std::vector<std::string>& moves_str) {
-  // Some UCI hosts just call position then immediately call go, while starting
-  // the clock on calling 'position'.
-  ResetMoveTimer();
   SharedLock lock(busy_mutex_);
   current_position_ = CurrentPosition{fen, moves_str};
   search_.reset();
@@ -214,7 +211,7 @@ void EngineController::Go(const GoParams& params) {
   // hence have the same start time like this behaves, or should we check start
   // time hasn't changed since last call to go and capture the new start time
   // now?
-  if (!move_start_time_) ResetMoveTimer();
+  ResetMoveTimer();
   go_params_ = params;
 
   std::unique_ptr<UciResponder> responder =
