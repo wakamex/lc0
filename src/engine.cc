@@ -153,10 +153,41 @@ void EngineController::SetPosition(const std::string& fen,
                                    const std::vector<std::string>& moves_str) {
   // Some UCI hosts just call position then immediately call go, while starting
   // the clock on calling 'position'.
-  ResetMoveTimer();
+  // Reset timer only if position changed
   SharedLock lock(busy_mutex_);
   current_position_ = CurrentPosition{fen, moves_str};
-  position_at_timer_start_ = current_position;
+  if (moves_str.size()==0) {
+    CERR << "resetting position_at_timer_start_ at game start";
+    old_fen_ = fen;
+    ResetMoveTimer();
+  }
+  else {
+    CERR << moves_str.size();
+    CERR << fen;
+    CERR << current_position_->fen.empty();
+    CERR << old_fen_.empty();
+    CERR << current_position_->fen;
+    CERR << old_fen_;
+    CERR << "Comparing fen \n"
+            << current_position_->fen
+            << "\nto\n"
+            << old_fen_
+            << "\nresult:"
+            << old_fen_.compare(current_position_->fen)
+            << "\n";
+    if (old_fen_.compare(current_position_->fen) != 0) {
+      ResetMoveTimer();
+      old_fen_ = current_position_->fen;
+      CERR << "Timer POSITION started at "
+              << FormatTime(SteadyClockToSystemClock(*move_start_time_));
+    }
+    else
+    {
+      CERR << "Timer POSITION not reset at "
+              << FormatTime(SteadyClockToSystemClock(*move_start_time_));
+    }
+  }  
+  
   search_.reset();
 }
 
@@ -215,8 +246,25 @@ void EngineController::Go(const GoParams& params) {
   // hence have the same start time like this behaves, or should we check start
   // time hasn't changed since last call to go and capture the new start time
   // now?
-  if (current_position_->fen.compare(position_at_timer_start_->fen) != 0)
+  // Reset timer only if position changed
+    CERR << "Comparing fen \n"
+            << current_position_->fen
+            << "\nto\n"
+            << old_fen_
+            << "\nresult:"
+            << old_fen_.compare(current_position_->fen)
+            << "\n";
+  if (current_position_->fen.compare(old_fen_) == 0) {
     ResetMoveTimer();
+    old_fen_ = current_position_->fen;
+    CERR << "Timer at GO started at "
+            << FormatTime(SteadyClockToSystemClock(*move_start_time_));
+  }
+  else {
+    CERR << "Timer at GO not reset at "
+            << FormatTime(SteadyClockToSystemClock(*move_start_time_));
+  }
+  
   go_params_ = params;
 
   std::unique_ptr<UciResponder> responder =

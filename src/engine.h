@@ -106,7 +106,7 @@ class EngineController {
   // actually search the position one move earlier.
   std::optional<CurrentPosition> current_position_;
   // Store position at timer start to check if timer needs to be reset at Go command
-  std::optional<CurrentPosition> position_at_timer_start_;
+  std::string old_fen_;
   GoParams go_params_;
 
   std::optional<std::chrono::steady_clock::time_point> move_start_time_;

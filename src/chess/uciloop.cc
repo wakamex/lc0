@@ -129,6 +129,7 @@ void UciLoop::RunLoop() {
   std::cout.setf(std::ios::unitbuf);
   std::string line;
   while (std::getline(std::cin, line)) {
+    CERR << line;
     LOGFILE << ">> " << line;
     try {
       auto command = ParseCommand(line);
